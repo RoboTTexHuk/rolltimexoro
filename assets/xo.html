@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="x-poe-datastore-behavior" content="local_only">
+    <meta charset="UTF-8">
+    <title>FinanceXO – Wealth Rituals</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- CSP для окружения PoE (можно удалить, если не нужно) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+
+    <!-- Tailwind / Icons / Fonts / Plotly -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lux: {
+                            black: '#050506',
+                            dark: '#101012',
+                            card: '#17181a',
+                            gold: '#d4af37',
+                            goldLight: '#f3e5ab',
+                            goldDark: '#aa8c2c',
+                            text: '#e0e0e0',
+                            muted: '#8a8a8a',
+                            danger: '#cf4444',
+                            success: '#44cf6e'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #050506;
+            color: #e0e0e0;
+        }
+        ::-webkit-scrollbar { width: 0; height: 0; }
+
+        .app-root {
+            min-height: 100vh;
+            width: 100%;
+            max-width: 100vw;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 50% -15%, #29241b 0, #050506 45%, #000 100%);
+        }
+
+        @supports(padding: max(0px)) {
+            .safe-top   { padding-top:  max(8px, env(safe-area-inset-top)); }
+            .safe-bottom{ padding-bottom:max(10px, env(safe-area-inset-bottom)); }
+        }
+
+        .main-scroll {
+            flex: 1 1 auto;
+            overflow-y: visible;
+            overflow-x: hidden;
+            padding-bottom: 92px;
+        }
+
+        .lux-gradient-text {
+            background: linear-gradient(to right, #d4af37, #f3e5ab, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: lux-shine 4s linear infinite;
+        }
+        @keyframes lux-shine {
+            to { background-position: 200% center; }
+        }
+
+        .tab-content {
+            display: none;
+            animation: lux-fade 0.35s ease-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes lux-fade {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-panel {
+            background: rgba(15, 15, 18, 0.92);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+        }
+        .modal-backdrop {
+            background: radial-gradient(circle at center, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.96) 58%, #000 100%);
+        }
+
+        .header-blur {
+            background: linear-gradient(to bottom, rgba(5,5,6,0.96) 0%, rgba(5,5,6,0.90) 55%, rgba(5,5,6,0.0) 100%);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .card-border {
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .nav-item {
+            transition: color .2s ease, transform .18s ease;
+        }
+        .nav-item.active {
+            color: #d4af37;
+            transform: translateY(-1px);
+        }
+        .nav-item span {
+            letter-spacing: 0.09em;
+        }
+
+        .pulse-shadow {
+            box-shadow: 0 0 55px rgba(212,175,55,0.55);
+        }
+
+        .goal-glow {
+            box-shadow: 0 0 40px rgba(212,175,55,0.35);
+        }
+
+        img {
+            -webkit-touch-callout: none;
+        }
+
+        .page-wrapper {
+            padding-bottom: 88px;
+        }
+    </style>
+</head>
+<body>
+<div class="app-root text-sm text-lux-text page-wrapper">
+
+    <!-- HEADER -->
+    <header class="header-blur px-7 md:px-10 pt-4 pb-3 flex items-center justify-between safe-top">
+        <div>
+            <div class="flex items-end gap-2">
+                <h1 class="text-2xl md:text-3xl font-serif font-semibold lux-gradient-text tracking-[0.26em] uppercase">
+                    Finance
+                </h1>
+                <span class="text-xs md:text-sm text-lux-gold uppercase tracking-[0.35em]">XO</span>
+            </div>
+            <p class="text-[11px] md:text-xs text-lux-muted mt-1 uppercase tracking-[0.25em]">
+                Daily Wealth Rituals
+            </p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <p class="text-[10px] text-lux-muted uppercase tracking-[0.25em]">Net flow</p>
+                <p class="text-sm text-lux-gold font-medium" id="headerNetLabel">+0</p>
+            </div>
+            <div class="w-11 h-11 rounded-full border border-lux-gold/50 p-0.5 overflow-hidden">
+                <!-- НЕЙТРАЛЬНОЕ ФОТО ПРОФИЛЯ -->
+                <img id="profileAvatar" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" class="w-full h-full object-cover rounded-full" alt="Profile">
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-scroll px-6 md:px-10 pt-3 pb-6">
+
+        <!-- TAB: TASKS -->
+        <section id="tab-tasks" class="tab-content active space-y-6 max-w-4xl mx-auto">
+            <div class="flex items-end justify-between mb-1">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-serif text-white tracking-wide">Daily money rituals</h2>
+                    <p class="text-[11px] text-lux-muted mt-1 uppercase tracking-[0.22em]">
+                        Set X / O for each habit
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-lux-muted">
+                    <button id="tasksPrevDay" class="px-2.5 py-1 rounded-full bg-lux-card/80 hover:bg-lux-card text-[10px] flex items-center gap-1 border border-neutral-700">
+                        <i class="fa-solid fa-chevron-left text-[9px]"></i><span>Prev</span>
+                    </button>
+                    <span id="tasksDateLabel" class="text-lux-gold border border-lux-gold/45 px-2.5 py-1 rounded-full bg-lux-gold/10 text-[10px] uppercase tracking-[0.20em]">
+                        Today
+                    </span>
+                    <button id="tasksNextDay" class="px-2.5 py-1 rounded-full bg-lux-card/80 hover:bg-lux-card text-[10px] flex items-center gap-1 border border-neutral-700">
+                        <span>Next</span><i class="fa-solid fa-chevron-right text-[9px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="task-list" class="space-y-3"></div>
+
+            <button id="addTaskBtn" class="w-full py-3.5 mt-2 rounded-2xl border border-dashed border-lux-muted/50 text-lux-muted hover:border-lux-gold hover:text-lux-gold transition-all flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.23em] bg-lux-card/20">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Add custom ritual</span>
+            </button>
+        </section>
+
+        <!-- TAB: GOAL -->
+        <section id="tab-goal" class="tab-content space-y-8 max-w-5xl mx-auto">
+            <div class="rounded-3xl bg-gradient-to-br from-lux-card via-lux-dark to-black card-border p-6 md:p-7 relative overflow-hidden goal-glow">
+                <div class="absolute -top-24 -right-10 w-52 h-52 rounded-full bg-lux-gold/9 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-32 left-14 w-64 h-64 rounded-full bg-lux-gold/4 blur-3xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-between mb-3 relative z-10">
+                    <div>
+                        <p class="text-[11px] text-lux-muted uppercase tracking-[0.28em] mb-1">
+                            Wealth target
+                        </p>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-3xl font-serif text-lux-gold">$</span>
+                            <input id="goalTargetInput" type="text" class="bg-transparent text-3xl md:text-4xl font-serif font-semibold text-white focus:outline-none border-b border-transparent focus:border-lux-gold/70 pb-1 w-40 md:w-56">
+                        </div>
+                        <p class="text-[11px] text-lux-muted mt-1">
+                            The capital you are currently moving towards.
+                        </p>
+                    </div>
+                    <div class="px-3 py-2 rounded-xl bg-black/40 border border-lux-gold/35 text-[11px] text-lux-gold flex flex-col items-end">
+                        <span class="uppercase tracking-[0.25em] mb-0.5">Progress</span>
+                        <span id="goalPercentLabel" class="text-base font-semibold">0%</span>
+                    </div>
+                </div>
+
+                <div class="mt-5 relative z-10">
+                    <div class="flex justify-between text-[11px] mb-2">
+                        <span id="goalEarnedLabel" class="text-lux-gold">Earned: 0</span>
+                        <span id="goalLeftLabel" class="text-lux-muted">Left: 0</span>
+                    </div>
+                    <div class="h-2 w-full rounded-full bg-gradient-to-r from-black via-lux-dark to-black overflow-hidden">
+                        <div id="goalProgressBar" class="h-full bg-gradient-to-r from-lux-goldDark via-lux-gold to-lux-goldLight w-[0%] shadow-[0_0_16px_rgba(212,175,55,0.9)] transition-all duration-500 ease-out"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-lg font-serif text-white">Income &amp; expense events</h3>
+                        <p class="text-[11px] text-lux-muted uppercase tracking-[0.2em] mt-0.5">
+                            Every move of money that affects this goal
+                        </p>
+                    </div>
+                    <button id="addEventBtn" class="px-3 py-1.5 rounded-full bg-lux-card text-xs text-lux-gold border border-lux-gold/40 hover:bg-lux-gold hover:text-lux-black transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>New event</span>
+                    </button>
+                </div>
+                <div id="eventsList" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
+            </div>
+        </section>
+
+        <!-- TAB: CHARTS -->
+        <section id="tab-charts" class="tab-content space-y-6 max-w-5xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-serif text-white tracking-wide">Charts</h2>
+                    <p class="text-[11px] text-lux-muted mt-1 uppercase tracking-[0.23em]">
+                        Flow &amp; distance to your goal
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="period-btn px-3.5 py-1.5 rounded-full text-[11px] bg-lux-gold text-black font-semibold shadow-lg shadow-lux-gold/30" data-period="month" id="filterMonth">
+                        Last 30 days
+                    </button>
+                    <button class="period-btn px-3.5 py-1.5 rounded-full text-[11px] bg-lux-card border border-lux-muted/30 text-lux-muted" data-period="all" id="filterAll">
+                        All time
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="rounded-2xl bg-lux-card/80 card-border p-4">
+                    <p class="text-[11px] text-lux-muted uppercase tracking-[0.22em] mb-1">Total income</p>
+                    <p id="summaryIncome" class="text-lg font-serif text-lux-success">+0</p>
+                </div>
+                <div class="rounded-2xl bg-lux-card/80 card-border p-4">
+                    <p class="text-[11px] text-lux-muted uppercase tracking-[0.22em] mb-1">Total expenses</p>
+                    <p id="summaryExpense" class="text-lg font-serif text-lux-danger">-0</p>
+                </div>
+                <div class="rounded-2xl bg-gradient-to-r from-lux-card via-lux-gold/12 to-lux-card border border-lux-gold/30 p-4 col-span-2 lg:col-span-1 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] text-lux-gold uppercase tracking-[0.24em] mb-1">Net result</p>
+                        <p id="summaryNet" class="text-2xl font-serif text-white">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-full bg-lux-gold/20 flex items-center justify-center text-lux-gold">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-lux-card/80 card-border p-4">
+                <h3 class="text-sm font-serif text-white mb-3">Financial flow</h3>
+                <div id="financeChart" class="w-full h-[260px] md:h-[340px]"></div>
+            </div>
+        </section>
+
+        <!-- TAB: PROFILE -->
+        <section id="tab-profile" class="tab-content space-y-8 max-w-xl mx-auto">
+            <div class="flex flex-col items-center pt-2">
+                <div class="relative w-28 h-28 md:w-32 md:h-32 mb-4">
+                    <div class="w-full h-full rounded-full border-2 border-lux-gold p-1 bg-gradient-to-br from-black via-lux-dark to-black">
+                        <!-- НЕЙТРАЛЬНОЕ ФОТО ПРОФИЛЯ -->
+                        <img id="profileAvatarBig" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" class="w-full h-full object-cover rounded-full" alt="User">
+                    </div>
+                    <button id="changePhotoBtn" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-lux-gold text-lux-black border-2 border-black flex items-center justify-center shadow-lg shadow-lux-gold/60">
+                        <i class="fa-solid fa-camera text-xs"></i>
+                    </button>
+                    <input id="photoInput" type="file" accept="image/*" class="hidden">
+                </div>
+
+                <input id="userNameInput" type="text" class="bg-transparent text-center text-xl md:text-2xl font-serif text-white border-b border-transparent focus:border-lux-gold focus:outline-none pb-1 w-full max-w-xs">
+                <p class="text-[11px] text-lux-muted mt-1 uppercase tracking-[0.25em]">Premium member</p>
+            </div>
+
+            <div class="relative w-full">
+                <div class="absolute -top-3 left-4 bg-lux-black px-2 text-[10px] text-lux-gold uppercase tracking-[0.25em]">Today’s mantra</div>
+                <div class="rounded-2xl card-border bg-lux-card/70 px-6 py-5 text-center relative overflow-hidden">
+                    <i class="fa-solid fa-quote-left absolute top-4 left-4 text-lux-gold/15 text-xl"></i>
+                    <i class="fa-solid fa-quote-right absolute bottom-4 right-4 text-lux-gold/15 text-xl"></i>
+                    <textarea id="sloganInput" rows="2" class="w-full bg-transparent text-center resize-none focus:outline-none font-serif text-lg text-white/90"></textarea>
+                </div>
+                <p id="sloganDateLabel" class="mt-1 text-[11px] text-lux-muted text-center"></p>
+            </div>
+
+            <div class="space-y-2 w-full">
+                <button id="exportDataBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-lux-card/70 card-border hover:border-lux-gold/30 hover:bg-lux-card transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-lux-dark flex items-center justify-center text-lux-gold">
+                            <i class="fa-solid fa-file-export text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-lux-text">Export data (JSON)</p>
+                            <p class="text-[11px] text-lux-muted">Copy to backup or send to yourself</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-lux-muted"></i>
+                </button>
+
+                <button id="notificationsBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-lux-card/70 card-border hover:border-lux-gold/30 hover:bg-lux-card transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-lux-dark flex items-center justify-center text-lux-gold">
+                            <i class="fa-solid fa-bell text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-lux-text">Notifications (info)</p>
+                            <p class="text-[11px] text-lux-muted">Use phone reminders to anchor habits</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-lux-muted"></i>
+                </button>
+
+                <button id="resetDataBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-lux-card/70 border border-transparent hover:border-lux-danger/55 hover:bg-lux-danger/10 transition-colors mt-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-lux-dark flex items-center justify-center text-lux-danger">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </div>
+                        <p class="text-sm text-lux-danger">Reset all data</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="safe-bottom px-10 md:px-24 pb-4 pt-3 border-t border-white/5 bg-gradient-to-t from-black via-black/95 to-black/80 backdrop-blur-xl flex items-center justify-between fixed bottom-0 left-0 right-0 z-40">
+        <button id="nav-tasks" class="nav-item active flex flex-col items-center gap-1 text-lux-gold text-xs">
+            <i class="fa-solid fa-list-check text-lg"></i>
+            <span class="uppercase text-[10px]">Tasks</span>
+        </button>
+        <button id="nav-goal" class="nav-item flex flex-col items-center gap-1 text-lux-muted text-xs">
+            <i class="fa-solid fa-bullseye text-lg"></i>
+            <span class="uppercase text-[10px]">Goal</span>
+        </button>
+
+        <div class="relative -translate-y-2">
+            <button id="quickAddBtn" class="w-16 h-16 rounded-full bg-gradient-to-b from-lux-goldLight via-lux-gold to-lux-goldDark text-black border-[3px] border-black flex items-center justify-center text-2xl pulse-shadow">
+                <span class="relative -top-[1px]">+</span>
+            </button>
+        </div>
+
+        <button id="nav-charts" class="nav-item flex flex-col items-center gap-1 text-lux-muted text-xs">
+            <i class="fa-solid fa-chart-pie text-lg"></i>
+            <span class="uppercase text-[10px]">Charts</span>
+        </button>
+        <button id="nav-profile" class="nav-item flex flex-col items-center gap-1 text-lux-muted text-xs">
+            <i class="fa-regular fa-user text-lg"></i>
+            <span class="uppercase text-[10px]">Profile</span>
+        </button>
+    </nav>
+
+    <div id="modalBackdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div id="modalContent" class="glass-panel rounded-2xl card-border p-5 mx-4 max-w-sm w-full"></div>
+    </div>
+</div>
+
+<script>
+    /* =================== HELPERS & STORAGE =================== */
+    const LS_KEYS = {
+        TASKS: 'fx_tasks',
+        GOAL: 'fx_goal',
+        PROFILE: 'fx_profile'
+    };
+
+    function todayISO(d = new Date()) {
+        return d.toISOString().slice(0,10);
+    }
+    function parseISO(str) {
+        return new Date(str + 'T00:00:00');
+    }
+    function formatDateHuman(str) {
+        const d = parseISO(str);
+        return d.toLocaleDateString('en-US', { day:'2-digit', month:'short', year:'numeric' });
+    }
+    function formatMoney(num) {
+        const n = Number(num) || 0;
+        return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+    function clamp(n, min, max) { return Math.min(Math.max(n, min), max); }
+    function loadJSON(key, fallback) {
+        try {
+            const v = localStorage.getItem(key);
+            if (!v) return fallback;
+            return JSON.parse(v);
+        } catch(e) {
+            console.error('load', key, e);
+            return fallback;
+        }
+    }
+    function saveJSON(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); }
+        catch(e) { console.error('save', key, e); }
+    }
+
+    /* =================== DATA (ПЕРСИСТЕНТНО ЧЕРЕЗ localStorage) =================== */
+    let tasksState = loadJSON(LS_KEYS.TASKS, null);
+    if (!tasksState) {
+        tasksState = {
+            tasks: [
+                { id: 't1', title: 'Invest in S&P 500', description: 'Automated daily buy', archived: false, createdAt: todayISO() },
+                { id: 't2', title: 'Review crypto positions', description: 'Check risk & rebalance', archived: false, createdAt: todayISO() },
+                { id: 't3', title: 'Move money to savings', description: 'Secure a small amount', archived: false, createdAt: todayISO() }
+            ],
+            history: {}
+        };
+        saveJSON(LS_KEYS.TASKS, tasksState);
+    }
+    let tasksCurrentDate = todayISO();
+
+    let goalState = loadJSON(LS_KEYS.GOAL, null);
+    if (!goalState) {
+        goalState = {
+            target: 100000,
+            events: [
+                { id: 'e1', amount: 2500, type: 'income', description: 'Freelance project', date: todayISO() },
+                { id: 'e2', amount: 4200, type: 'income', description: 'Sold watch', date: todayISO() },
+                { id: 'e3', amount: 850,  type: 'income', description: 'Crypto gain',   date: todayISO() }
+            ]
+        };
+        saveJSON(LS_KEYS.GOAL, goalState);
+    }
+
+    const DEFAULT_AVATAR_URL = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d';
+
+    let profileState = loadJSON(LS_KEYS.PROFILE, null);
+    if (!profileState) {
+        const t = todayISO();
+        profileState = {
+            name: 'Alexander Volkov',
+            avatar: null,
+            sloganByDate: {
+                [t]: 'Fortune favors the bold.'
+            }
+        };
+        saveJSON(LS_KEYS.PROFILE, profileState);
+    }
+
+    /* =================== MODAL =================== */
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalContent  = document.getElementById('modalContent');
+
+    function openModal(html) {
+        modalContent.innerHTML = html;
+        modalBackdrop.classList.remove('hidden');
+    }
+    function closeModal() {
+        modalBackdrop.classList.add('hidden');
+    }
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+    });
+
+    function openConfirmModal(title, text, onConfirm) {
+        openModal(`
+            <h3 class="text-lg font-serif text-white mb-3">${title}</h3>
+            <p class="text-sm text-lux-muted mb-4">${text}</p>
+            <div class="flex justify-end gap-2">
+                <button id="confirmCancel" class="px-3 py-1.5 text-xs rounded-full bg-lux-card text-lux-muted border border-lux-card hover:border-lux-muted/40">Cancel</button>
+                <button id="confirmOk" class="px-3 py-1.5 text-xs rounded-full bg-lux-danger/20 text-lux-danger border border-lux-danger/40 hover:bg-lux-danger/30">Yes</button>
+            </div>
+        `);
+        document.getElementById('confirmCancel').onclick = closeModal;
+        document.getElementById('confirmOk').onclick = () => {
+            closeModal();
+            if (typeof onConfirm === 'function') onConfirm();
+        };
+    }
+
+    /* =================== NAVIGATION =================== */
+    const tabs = ['tasks','goal','charts','profile'];
+    function switchTab(tab) {
+        tabs.forEach(id => {
+            const sec = document.getElementById('tab-' + id);
+            const nav = document.getElementById('nav-' + id);
+            if (id === tab) {
+                sec.classList.add('active');
+                nav.classList.add('active','text-lux-gold');
+                nav.classList.remove('text-lux-muted');
+            } else {
+                sec.classList.remove('active');
+                nav.classList.remove('active','text-lux-gold');
+                nav.classList.add('text-lux-muted');
+            }
+        });
+        if (tab === 'charts') renderCharts();
+    }
+    tabs.forEach(id => {
+        document.getElementById('nav-' + id).addEventListener('click', () => switchTab(id));
+    });
+
+    /* =================== TASKS =================== */
+    const taskListEl      = document.getElementById('task-list');
+    const tasksDateLabel  = document.getElementById('tasksDateLabel');
+    const tasksPrevDayBtn = document.getElementById('tasksPrevDay');
+    const tasksNextDayBtn = document.getElementById('tasksNextDay');
+
+    function updateTasksDateLabel() {
+        const today = todayISO();
+        if (tasksCurrentDate === today) {
+            tasksDateLabel.textContent = 'Today';
+        } else {
+            const diffDays = (parseISO(tasksCurrentDate) - parseISO(today)) / (1000*60*60*24);
+            if (diffDays === -1) tasksDateLabel.textContent = 'Yesterday';
+            else if (diffDays === 1) tasksDateLabel.textContent = 'Tomorrow';
+            else tasksDateLabel.textContent = formatDateHuman(tasksCurrentDate);
+        }
+    }
+
+    function getTaskMark(taskId, date) {
+        const h = tasksState.history[taskId] || {};
+        return h[date] || null;
+    }
+    function setTaskMark(taskId, date, markOrNull) {
+        if (!tasksState.history[taskId]) tasksState.history[taskId] = {};
+        if (markOrNull === null) delete tasksState.history[taskId][date];
+        else tasksState.history[taskId][date] = markOrNull;
+        saveJSON(LS_KEYS.TASKS, tasksState);
+        renderTasks();
+    }
+
+    function renderTasks() {
+        taskListEl.innerHTML = '';
+        updateTasksDateLabel();
+        const tasks = tasksState.tasks.filter(t => !t.archived);
+        if (!tasks.length) {
+            const div = document.createElement('div');
+            div.className = 'text-center text-lux-muted text-[13px] mt-10';
+            div.textContent = 'No rituals yet. Add your first one.';
+            taskListEl.appendChild(div);
+            return;
+        }
+        tasks.forEach(t => {
+            const mark = getTaskMark(t.id, tasksCurrentDate);
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between rounded-2xl bg-lux-card/90 card-border px-4 py-3 hover:border-lux-gold/40 transition-colors';
+
+            const left = document.createElement('div');
+            left.className = 'flex-1 pr-3';
+            const title = document.createElement('div');
+            title.className = 'flex items-center justify-between gap-2';
+            const h = document.createElement('h3');
+            h.className = 'text-[15px] md:text-base text-white font-medium';
+            h.textContent = t.title;
+            const edit = document.createElement('button');
+            edit.className = 'text-[11px] text-lux-muted hover:text-lux-gold flex items-center gap-1';
+            edit.innerHTML = '<i class="fa-solid fa-pen-to-square text-[10px]"></i><span>Edit</span>';
+            edit.onclick = () => openEditTaskModal(t);
+            title.appendChild(h);
+            title.appendChild(edit);
+            left.appendChild(title);
+            if (t.description) {
+                const p = document.createElement('p');
+                p.className = 'text-[12px] text-lux-muted mt-1';
+                p.textContent = t.description;
+                left.appendChild(p);
+            }
+
+            const right = document.createElement('div');
+            right.className = 'flex items-center gap-2';
+            const base = 'w-10 h-10 rounded-full flex items-center justify-center border text-[15px] font-serif transition-all';
+            const xBtn = document.createElement('button');
+            const oBtn = document.createElement('button');
+
+            if (mark === 'X') {
+                xBtn.className = base + ' bg-lux-success/15 border-lux-success text-lux-success shadow-[0_0_10px_rgba(68,207,110,0.4)]';
+                oBtn.className = base + ' bg-lux-dark border-lux-muted/40 text-lux-muted hover:border-lux-danger hover:text-lux-danger';
+            } else if (mark === 'O') {
+                oBtn.className = base + ' bg-lux-danger/15 border-lux-danger text-lux-danger shadow-[0_0_10px_rgba(207,68,68,0.4)]';
+                xBtn.className = base + ' bg-lux-dark border-lux-muted/40 text-lux-muted hover:border-lux-success hover:text-lux-success';
+            } else {
+                xBtn.className = base + ' bg-lux-dark border-lux-muted/40 text-lux-muted hover:border-lux-success hover:text-lux-success';
+                oBtn.className = base + ' bg-lux-dark border-lux-muted/40 text-lux-muted hover:border-lux-danger hover:text-lux-danger';
+            }
+            xBtn.textContent = 'X';
+            oBtn.textContent = 'O';
+
+            xBtn.onclick = () => {
+                const current = getTaskMark(t.id, tasksCurrentDate);
+                const next    = current === 'X' ? null : 'X';
+                setTaskMark(t.id, tasksCurrentDate, next);
+            };
+            oBtn.onclick = () => {
+                const current = getTaskMark(t.id, tasksCurrentDate);
+                const next    = current === 'O' ? null : 'O';
+                setTaskMark(t.id, tasksCurrentDate, next);
+            };
+
+            right.appendChild(xBtn);
+            right.appendChild(oBtn);
+
+            row.appendChild(left);
+            row.appendChild(right);
+            taskListEl.appendChild(row);
+        });
+    }
+
+    function openEditTaskModal(task) {
+        const isNew = !task;
+        const t = task || { title:'', description:'' };
+        openModal(`
+            <h3 class="text-lg font-serif text-white mb-3">${isNew ? 'New ritual' : 'Edit ritual'}</h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Title</label>
+                    <input id="modalTaskTitle" type="text" class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lux-gold" value="${(t.title || '').replace(/"/g,'&quot;')}">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Description (optional)</label>
+                    <textarea id="modalTaskDesc" rows="2" class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lux-gold">${t.description || ''}</textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    ${!isNew ? `<button id="modalTaskDelete" class="px-3 py-1.5 text-xs rounded-full bg-lux-danger/10 text-lux-danger border border-lux-danger/40 hover:bg-lux-danger/20">Delete</button>` : ''}
+                    <button id="modalTaskCancel" class="px-3 py-1.5 text-xs rounded-full bg-lux-card text-lux-muted border border-lux-card hover:border-lux-muted/40">Cancel</button>
+                    <button id="modalTaskSave" class="px-3 py-1.5 text-xs rounded-full bg-lux-gold text-black font-semibold">Save</button>
+                </div>
+            </div>
+        `);
+        document.getElementById('modalTaskCancel').onclick = closeModal;
+        document.getElementById('modalTaskSave').onclick = () => {
+            const title = document.getElementById('modalTaskTitle').value.trim();
+            const desc  = document.getElementById('modalTaskDesc').value.trim();
+            if (!title) return;
+            if (isNew) {
+                tasksState.tasks.push({
+                    id: 't_' + Date.now(),
+                    title, description: desc,
+                    archived:false,
+                    createdAt: todayISO()
+                });
+            } else {
+                const idx = tasksState.tasks.findIndex(x => x.id === task.id);
+                if (idx >= 0) {
+                    tasksState.tasks[idx].title = title;
+                    tasksState.tasks[idx].description = desc;
+                }
+            }
+            saveJSON(LS_KEYS.TASKS, tasksState);
+            closeModal();
+            renderTasks();
+        };
+        if (!isNew) {
+            document.getElementById('modalTaskDelete').onclick = () => {
+                openConfirmModal('Delete ritual?', 'Daily marks will stay in history.', () => {
+                    tasksState.tasks = tasksState.tasks.filter(x => x.id !== task.id);
+                    saveJSON(LS_KEYS.TASKS, tasksState);
+                    closeModal();
+                    renderTasks();
+                });
+            };
+        }
+    }
+
+    document.getElementById('addTaskBtn').addEventListener('click', () => openEditTaskModal(null));
+
+    tasksPrevDayBtn.addEventListener('click', () => {
+        const d = parseISO(tasksCurrentDate); d.setDate(d.getDate() - 1);
+        tasksCurrentDate = todayISO(d);
+        renderTasks();
+    });
+    tasksNextDayBtn.addEventListener('click', () => {
+        const d = parseISO(tasksCurrentDate); d.setDate(d.getDate() + 1);
+        tasksCurrentDate = todayISO(d);
+        renderTasks();
+    });
+
+    /* =================== GOAL & EVENTS =================== */
+    const goalTargetInput   = document.getElementById('goalTargetInput');
+    const goalEarnedLabel   = document.getElementById('goalEarnedLabel');
+    const goalLeftLabel     = document.getElementById('goalLeftLabel');
+    const goalPercentLabel  = document.getElementById('goalPercentLabel');
+    const goalProgressBar   = document.getElementById('goalProgressBar');
+    const eventsListEl      = document.getElementById('eventsList');
+    const headerNetLabel    = document.getElementById('headerNetLabel');
+
+    function recomputeGoal() {
+        let balance = 0;
+        goalState.events.forEach(ev => {
+            const v = Number(ev.amount) || 0;
+            if (ev.type === 'income') balance += v;
+            else balance -= v;
+        });
+        const earned  = balance;
+        const target  = Number(goalState.target) || 0;
+        const left    = target > 0 ? Math.max(target - earned, 0) : 0;
+        const percent = target > 0 ? clamp(earned / target * 100, 0, 100) : 0;
+
+        goalTargetInput.value = formatMoney(target);
+        goalEarnedLabel.textContent  = 'Earned: ' + formatMoney(earned);
+        goalLeftLabel.textContent    = 'Left: '   + formatMoney(left);
+        goalPercentLabel.textContent = Math.round(percent) + '%';
+        goalProgressBar.style.width  = percent + '%';
+
+        headerNetLabel.textContent = (earned >= 0 ? '+' : '') + formatMoney(earned);
+    }
+    function renderEvents() {
+        eventsListEl.innerHTML = '';
+        if (!goalState.events.length) {
+            const div = document.createElement('div');
+            div.className = 'text-center text-lux-muted text-[13px] mt-2';
+            div.textContent = 'No events yet.';
+            eventsListEl.appendChild(div);
+            return;
+        }
+        const sorted = [...goalState.events].sort((a,b) => a.date > b.date ? -1 : 1);
+        sorted.forEach(ev => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between rounded-2xl bg-lux-card/90 card-border px-4 py-3';
+
+            const left = document.createElement('div');
+            left.className = 'flex items-center gap-3';
+            const iconWrap = document.createElement('div');
+            iconWrap.className = 'w-10 h-10 rounded-full flex items-center justify-center ' +
+                (ev.type === 'income' ? 'bg-lux-success/15 text-lux-success' : 'bg-lux-danger/15 text-lux-danger');
+            iconWrap.innerHTML = `<i class="fa-solid ${ev.type === 'income' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>`;
+            const textWrap = document.createElement('div');
+            const title = document.createElement('p');
+            title.className = 'text-[14px] text-white';
+            title.textContent = ev.description || (ev.type === 'income' ? 'Income' : 'Expense');
+            const date = document.createElement('p');
+            date.className = 'text-[11px] text-lux-muted';
+            date.textContent = formatDateHuman(ev.date);
+            textWrap.appendChild(title);
+            textWrap.appendChild(date);
+
+            left.appendChild(iconWrap);
+            left.appendChild(textWrap);
+
+            const right = document.createElement('div');
+            right.className = 'flex items-center gap-2';
+            const span = document.createElement('span');
+            span.className = 'font-serif text-[15px] ' + (ev.type === 'income' ? 'text-lux-success' : 'text-lux-danger');
+            span.textContent = (ev.type === 'income' ? '+' : '-') + formatMoney(ev.amount);
+            const edit = document.createElement('button');
+            edit.className = 'text-[11px] text-lux-muted hover:text-lux-gold';
+            edit.innerHTML = '<i class="fa-solid fa-pen-to-square text-[11px]"></i>';
+            edit.onclick = () => openEditEventModal(ev);
+
+            right.appendChild(span);
+            right.appendChild(edit);
+
+            row.appendChild(left);
+            row.appendChild(right);
+            eventsListEl.appendChild(row);
+        });
+        recomputeGoal();
+    }
+
+    function openEditEventModal(ev) {
+        const isNew = !ev;
+        const initial = ev || { amount:'', type:'income', description:'', date: todayISO() };
+        openModal(`
+            <h3 class="text-lg font-serif text-white mb-3">${isNew ? 'New event' : 'Edit event'}</h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Type</label>
+                    <div class="flex gap-2">
+                        <button id="modalEvIncome" class="flex-1 px-3 py-1.5 rounded-full text-xs border ${initial.type === 'income' ? 'border-lux-gold bg-lux-gold/15 text-lux-gold' : 'border-lux-card bg-lux-dark text-lux-muted'}">Income</button>
+                        <button id="modalEvExpense" class="flex-1 px-3 py-1.5 rounded-full text-xs border ${initial.type === 'expense' ? 'border-lux-danger bg-lux-danger/15 text-lux-danger' : 'border-lux-card bg-lux-dark text-lux-muted'}">Expense</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Amount</label>
+                    <input id="modalEvAmount" type="number" step="0.01" class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lux-gold" value="${initial.amount}">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Description</label>
+                    <input id="modalEvDesc" type="text" class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lux-gold" value="${(initial.description || '').replace(/"/g,'&quot;')}">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-lux-muted mb-1 uppercase tracking-[0.18em]">Date</label>
+                    <input id="modalEvDate" type="date" class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lux-gold" value="${initial.date}">
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    ${!isNew ? `<button id="modalEvDelete" class="px-3 py-1.5 text-xs rounded-full bg-lux-danger/10 text-lux-danger border border-lux-danger/40 hover:bg-lux-danger/20">Delete</button>` : ''}
+                    <button id="modalEvCancel" class="px-3 py-1.5 text-xs rounded-full bg-lux-card text-lux-muted border border-lux-card hover:border-lux-muted/40">Cancel</button>
+                    <button id="modalEvSave" class="px-3 py-1.5 text-xs rounded-full bg-lux-gold text-black font-semibold">Save</button>
+                </div>
+            </div>
+        `);
+        let currentType = initial.type;
+
+        const incomeBtn  = document.getElementById('modalEvIncome');
+        const expenseBtn = document.getElementById('modalEvExpense');
+
+        function updateTypeButtons() {
+            if (currentType === 'income') {
+                incomeBtn.className  = 'flex-1 px-3 py-1.5 rounded-full text-xs border border-lux-gold bg-lux-gold/15 text-lux-gold';
+                expenseBtn.className = 'flex-1 px-3 py-1.5 rounded-full text-xs border border-lux-card bg-lux-dark text-lux-muted';
+            } else {
+                expenseBtn.className = 'flex-1 px-3 py-1.5 rounded-full text-xs border border-lux-danger bg-lux-danger/15 text-lux-danger';
+                incomeBtn.className  = 'flex-1 px-3 py-1.5 rounded-full text-xs border border-lux-card bg-lux-dark text-lux-muted';
+            }
+        }
+
+        incomeBtn.onclick  = () => { currentType = 'income';  updateTypeButtons(); };
+        expenseBtn.onclick = () => { currentType = 'expense'; updateTypeButtons(); };
+
+        document.getElementById('modalEvCancel').onclick = closeModal;
+        document.getElementById('modalEvSave').onclick = () => {
+            const amount = parseFloat(document.getElementById('modalEvAmount').value);
+            const desc   = document.getElementById('modalEvDesc').value.trim();
+            const date   = document.getElementById('modalEvDate').value || todayISO();
+            if (!amount || amount === 0) return;
+
+            if (isNew) {
+                goalState.events.push({
+                    id: 'e_' + Date.now(),
+                    amount, type: currentType,
+                    description: desc || (currentType === 'income' ? 'Income' : 'Expense'),
+                    date
+                });
+            } else {
+                const idx = goalState.events.findIndex(x => x.id === ev.id);
+                if (idx >= 0) {
+                    goalState.events[idx].amount      = amount;
+                    goalState.events[idx].type        = currentType;
+                    goalState.events[idx].description = desc || goalState.events[idx].description;
+                    goalState.events[idx].date        = date;
+                }
+            }
+            saveJSON(LS_KEYS.GOAL, goalState);
+            closeModal();
+            renderEvents();
+            renderCharts();
+        };
+
+        if (!isNew) {
+            document.getElementById('modalEvDelete').onclick = () => {
+                openConfirmModal('Delete event?', 'It will disappear from goal and charts.', () => {
+                    goalState.events = goalState.events.filter(x => x.id !== ev.id);
+                    saveJSON(LS_KEYS.GOAL, goalState);
+                    closeModal();
+                    renderEvents();
+                    renderCharts();
+                });
+            };
+        }
+    }
+
+    document.getElementById('addEventBtn').addEventListener('click', () => openEditEventModal(null));
+    document.getElementById('quickAddBtn').addEventListener('click', () => openEditEventModal(null));
+
+    goalTargetInput.addEventListener('blur', () => {
+        const raw = goalTargetInput.value.replace(/\s/g,'').replace(',', '.');
+        const n   = parseFloat(raw);
+        if (n && n > 0) {
+            goalState.target = n;
+            saveJSON(LS_KEYS.GOAL, goalState);
+            recomputeGoal();
+            renderCharts();
+        } else {
+            goalTargetInput.value = formatMoney(goalState.target || 0);
+        }
+    });
+
+    /* =================== CHARTS =================== */
+    let currentPeriod = 'month';
+    const periodBtns = document.querySelectorAll('.period-btn');
+    periodBtns.forEach(b => {
+        b.addEventListener('click', () => {
+            currentPeriod = b.dataset.period || 'month';
+            periodBtns.forEach(x => {
+                if (x === b) {
+                    x.className = 'period-btn px-3.5 py-1.5 rounded-full text-[11px] bg-lux-gold text-black font-semibold shadow-lg shadow-lux-gold/30';
+                } else {
+                    x.className = 'period-btn px-3.5 py-1.5 rounded-full text-[11px] bg-lux-card border border-lux-muted/30 text-lux-muted';
+                }
+            });
+            renderCharts();
+        });
+    });
+
+    const summaryIncomeEl  = document.getElementById('summaryIncome');
+    const summaryExpenseEl = document.getElementById('summaryExpense');
+    const summaryNetEl     = document.getElementById('summaryNet');
+
+    function getEventsForPeriod() {
+        const now = new Date();
+        const today = todayISO(now);
+        let start;
+        if (currentPeriod === 'month') {
+            const d = new Date(now.getTime() - 29*24*60*60*1000);
+            start = todayISO(d);
+        } else {
+            start = '1900-01-01';
+        }
+        return goalState.events.filter(ev => ev.date >= start && ev.date <= today);
+    }
+
+    function renderCharts() {
+        const events = getEventsForPeriod();
+        if (!events.length) {
+            summaryIncomeEl.textContent  = '+0';
+            summaryExpenseEl.textContent = '-0';
+            summaryNetEl.textContent     = '0';
+            try {
+                Plotly.newPlot('financeChart', [], {
+                    paper_bgcolor:'rgba(0,0,0,0)',
+                    plot_bgcolor:'rgba(0,0,0,0)',
+                    margin:{t:10,r:10,b:30,l:30},
+                    xaxis:{color:'#888'},
+                    yaxis:{color:'#888'},
+                    font:{family:'Inter'}
+                }, {responsive:true, displayModeBar:false});
+            } catch(e) {}
+            return;
+        }
+
+        const map = {};
+        events.forEach(ev => {
+            if (!map[ev.date]) map[ev.date] = {income:0,expense:0};
+            if (ev.type === 'income') map[ev.date].income += Number(ev.amount) || 0;
+            else map[ev.date].expense += Number(ev.amount) || 0;
+        });
+        const dates   = Object.keys(map).sort();
+        const incomes = dates.map(d => map[d].income);
+        const expenses= dates.map(d => map[d].expense);
+
+        let totalIncome = 0, totalExpense = 0;
+        incomes.forEach(v => totalIncome += v);
+        expenses.forEach(v => totalExpense += v);
+        const net = totalIncome - totalExpense;
+
+        summaryIncomeEl.textContent  = '+' + formatMoney(totalIncome);
+        summaryExpenseEl.textContent = '-' + formatMoney(totalExpense);
+        summaryNetEl.textContent     = (net >= 0 ? '+' : '') + formatMoney(net);
+
+        const target = Number(goalState.target) || 0;
+        let cum = 0;
+        const leftArr = dates.map(d => {
+            const e = map[d];
+            cum += e.income - e.expense;
+            return Math.max(target - cum, 0);
+        });
+
+        try {
+            const traceIncome = {
+                x: dates, y: incomes,
+                type:'bar', name:'Income',
+                marker:{color:'#44cf6e', opacity:0.9}
+            };
+            const traceExpense = {
+                x: dates, y: expenses,
+                type:'bar', name:'Expense',
+                marker:{color:'#cf4444', opacity:0.85}
+            };
+            const traceLeft = {
+                x: dates, y: leftArr,
+                type:'scatter', mode:'lines+markers',
+                name:'Left to goal',
+                line:{color:'#d4af37', width:2}
+            };
+            const layout = {
+                barmode:'group',
+                paper_bgcolor:'rgba(0,0,0,0)',
+                plot_bgcolor:'rgba(0,0,0,0)',
+                margin:{t:10,r:10,b:30,l:38},
+                showlegend:true,
+                legend:{
+                    orientation:'h',
+                    y:-0.25,
+                    font:{color:'#e0e0e0', size:10}
+                },
+                xaxis:{
+                    showgrid:false,
+                    color:'#888',
+                    tickfont:{size:10}
+                },
+                yaxis:{
+                    showgrid:true,
+                    gridcolor:'#2b2b2f',
+                    gridwidth:0.5,
+                    color:'#888',
+                    tickfont:{size:10}
+                },
+                font:{family:'Inter'}
+            };
+            Plotly.newPlot('financeChart', [traceIncome, traceExpense, traceLeft], layout, {responsive:true, displayModeBar:false});
+        } catch(e) {
+            console.error('chart error', e);
+        }
+    }
+
+    /* =================== PROFILE (С ПЕРСИСТЕНЦИЕЙ) =================== */
+    const profileAvatar    = document.getElementById('profileAvatar');
+    const profileAvatarBig = document.getElementById('profileAvatarBig');
+    const changePhotoBtn   = document.getElementById('changePhotoBtn');
+    const photoInput       = document.getElementById('photoInput');
+    const userNameInput    = document.getElementById('userNameInput');
+    const sloganInput      = document.getElementById('sloganInput');
+    const sloganDateLabel  = document.getElementById('sloganDateLabel');
+
+    function renderProfile() {
+        userNameInput.value = profileState.name || '';
+        const avatarSrc = profileState.avatar || DEFAULT_AVATAR_URL;
+        profileAvatar.src    = avatarSrc;
+        profileAvatarBig.src = avatarSrc;
+        const today = todayISO();
+        sloganInput.value = profileState.sloganByDate[today] || '';
+        sloganDateLabel.textContent = 'Mantra for ' + formatDateHuman(today);
+    }
+
+    userNameInput.addEventListener('blur', () => {
+        profileState.name = userNameInput.value.trim() || 'User';
+        saveJSON(LS_KEYS.PROFILE, profileState);
+    });
+    sloganInput.addEventListener('blur', () => {
+        const today = todayISO();
+        profileState.sloganByDate[today] = sloganInput.value.trim();
+        saveJSON(LS_KEYS.PROFILE, profileState);
+    });
+    changePhotoBtn.addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            profileState.avatar = ev.target.result;  // dataURL сохраняется в localStorage
+            saveJSON(LS_KEYS.PROFILE, profileState);
+            renderProfile();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    /* =================== EXPORT & RESET & NOTIFICATIONS =================== */
+    document.getElementById('exportDataBtn').addEventListener('click', () => {
+        const data = { tasks: tasksState, goal: goalState, profile: profileState };
+        const json = JSON.stringify(data, null, 2);
+        openModal(`
+            <h3 class="text-lg font-serif text-white mb-3">Export data</h3>
+            <p class="text-[11px] text-lux-muted mb-2">Copy JSON and save it somewhere safe.</p>
+            <textarea class="w-full bg-lux-dark border border-lux-card rounded-xl px-3 py-2 text-[11px] leading-tight text-lux-text" rows="9">${json.replace(/</g,'&lt;')}</textarea>
+            <div class="flex justify-end mt-3">
+                <button id="exportClose" class="px-3 py-1.5 text-xs rounded-full bg-lux-card text-lux-muted border border-lux-card hover:border-lux-muted/40">Close</button>
+            </div>
+        `);
+        document.getElementById('exportClose').onclick = closeModal;
+    });
+
+    document.getElementById('resetDataBtn').addEventListener('click', () => {
+        openConfirmModal(
+            'Reset all data?',
+            'Tasks, marks, goals, events and profile will be removed. This cannot be undone.',
+            () => {
+                localStorage.removeItem(LS_KEYS.TASKS);
+                localStorage.removeItem(LS_KEYS.GOAL);
+                localStorage.removeItem(LS_KEYS.PROFILE);
+                location.reload();
+            }
+        );
+    });
+
+    document.getElementById('notificationsBtn').addEventListener('click', () => {
+        openModal(`
+            <h3 class="text-lg font-serif text-white mb-3">Notifications</h3>
+            <p class="text-sm text-lux-muted mb-4">
+                This prototype does not send real push notifications.
+                Use your iPhone/iPad reminders or calendar to ping yourself at the times you want to perform money rituals.
+            </p>
+            <div class="flex justify-end">
+                <button id="notifClose" class="px-3 py-1.5 text-xs rounded-full bg-lux-card text-lux-muted border border-lux-card hover:border-lux-muted/40">Got it</button>
+            </div>
+        `);
+        document.getElementById('notifClose').onclick = closeModal;
+    });
+
+    /* =================== INIT =================== */
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTasks();
+        renderEvents();
+        renderProfile();
+        renderCharts();
+    });
+</script>
+</body>
+</html>
